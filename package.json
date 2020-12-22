@@ -1,0 +1,36 @@
+{
+  "name": "assignment-a2-the-gathering-web-scraper",
+  "version": "1.0.0",
+  "description": "In this assignment, you got to help three friends, Peter, Paul, and Mary, with planning their once a month gathering. Once a month, they gather to watch a movie and then dine at their favorite restaurant. It is quite difficult for the friends to plan a gathering because they first have to find at least one day when everyone can then find a movie, to finally find a time when a table is free to book at the restaurant.",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "lint": "npx eslint ./src || exit 0",
+    "lint:fix": "npx eslint ./src --fix || exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.lnu.se:1dv026/student/sa224ny/assignment-a2-the-gathering-web-scraper.git"
+  },
+  "contributors": [
+    "Sebastian Åkerblom <sa224ny@student.lnu.se>"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@lnu/eslint-config": "^1.1.2",
+    "eslint": "^7.14.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsdoc": "^30.7.8",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^5.0.0"
+  },
+  "eslintConfig": {
+    "extends": "@lnu"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "cheerio": "^1.0.0-rc.5"
+  }
+}
