@@ -57,23 +57,46 @@ function mainScraper (path) {
         })
       }
       if (link.includes('cinema')) {
-        setTimeout(() => {
-          availableDays.forEach(day => {
-            if (day === 'friday') {
-              axios.get(`${link}/check?day=05&movie=01`).then(response => {
-                console.log(response.data)
-              })
-
-            }
-            if (day === 'saturday') {
-              
-            }
-            if (day === 'sunday') {
-              
-            }
+        let numberOfMovies = 0
+        axios.get(link).then(response => {
+          const amountOfMovies = []
+          const $ = cheerio.load(response.data)
+          $('#movie > option').each((index, item) => {
+             amountOfMovies.push($(item).attr('value'))
           })
-        }, 500)
-        
+          numberOfMovies = amountOfMovies.length - 1
+          return numberOfMovies
+        }).then((numberOfMovies) => {
+          setTimeout(() => {
+            availableDays.forEach(day => {
+              if (day === 'friday') {
+                for (let i = 0; i < numberOfMovies; i++) {
+                  axios.get(`${link}/check?day=05&movie=0${i + 1}`)
+                  .then(response => {
+                    console.log(response.data)
+                  })
+                }
+              }
+              if (day === 'saturday') {
+                for (let i = 0; i < numberOfMovies; i++) {
+                  axios.get(`${link}/check?day=06&movie=0${i + 1}`)
+                  .then(response => {
+                    console.log(response.data)
+                  })
+                }
+              }
+              if (day === 'sunday') {
+                for (let i = 0; i < numberOfMovies; i++) {
+                  axios.get(`${link}/check?day=07&movie=0${i + 1}`)
+                  .then(response => {
+                    console.log(response.data)
+                  })
+                }
+              }
+            })
+          }, 500)
+          
+        })
       }
     })
   })

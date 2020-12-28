@@ -7,4 +7,4 @@ const [,, path] = process.argv
 
 console.log(`Web scraping ${path}\nThis may take some time...`)
 
-mainScraper(url1)
+mainScraper(url2)
