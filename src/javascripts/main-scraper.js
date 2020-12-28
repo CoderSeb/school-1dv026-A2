@@ -4,6 +4,7 @@ import cheerio from 'cheerio'
 const fullUsers = []
 let userObj = {}
 let availableDays = []
+const movies = []
 const mainLinks = []
 const calendarLinks = []
 
@@ -73,7 +74,7 @@ function mainScraper (path) {
                 for (let i = 0; i < numberOfMovies; i++) {
                   axios.get(`${link}/check?day=05&movie=0${i + 1}`)
                   .then(response => {
-                    console.log(response.data)
+                    movies.push(response.data)
                   })
                 }
               }
@@ -81,7 +82,7 @@ function mainScraper (path) {
                 for (let i = 0; i < numberOfMovies; i++) {
                   axios.get(`${link}/check?day=06&movie=0${i + 1}`)
                   .then(response => {
-                    console.log(response.data)
+                    movies.push(response.data)
                   })
                 }
               }
@@ -89,13 +90,32 @@ function mainScraper (path) {
                 for (let i = 0; i < numberOfMovies; i++) {
                   axios.get(`${link}/check?day=07&movie=0${i + 1}`)
                   .then(response => {
-                    console.log(response.data)
+                    movies.push(response.data)
                   })
                 }
               }
             })
-          }, 500)
-          
+            setTimeout(() => {
+              const availableMovies = []
+              const orderedMovies = []
+              for (let i = 0; i < movies.length; i++) {
+                if (movies[i][0].status === 1) {
+                  availableMovies.push(movies[i][0])
+                }
+                if (movies[i][1].status === 1) {
+                  availableMovies.push(movies[i][1])
+                }
+                if (movies[i][2].status === 1) {
+                  availableMovies.push(movies[i][2])
+                }
+                availableMovies.forEach(array => {
+                  orderedMovies.push(...array)
+                })
+                console.log(orderedMovies)
+                // Continue here!!
+              }
+            }, 300)
+          }, 400)
         })
       }
     })
@@ -130,7 +150,6 @@ function findAvailableDay (fullUsers) {
 }
 
 function getCount (array, value) {
-  let count = 0
   return array.filter(x => x === value).length
 }
 
