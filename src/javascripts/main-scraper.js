@@ -36,18 +36,21 @@ function mainScraper (path) {
               $('tbody > tr > td').each((index, item) => {
                 weekDays.push($(item).text().toUpperCase())
               })
-                userObj = {
-                  name: $('h2').text(),
-                  calendarUrl: mainLinks[0] + link,
-                  availableDays: {
-                    friday: weekDays[0].includes('OK'),
-                    saturday: weekDays[1].includes('OK'),
-                    sunday: weekDays[2].includes('OK')
-                  }
+              userObj = {
+                name: $('h2').text(),
+                calendarUrl: mainLinks[0] + link,
+                availableDays: {
+                  friday: weekDays[0].includes('OK'),
+                  saturday: weekDays[1].includes('OK'),
+                  sunday: weekDays[2].includes('OK')
                 }
-                fullUsers.push(userObj)
-                if (fullUsers.length === 3) {
-                  return fullUsers
+              }
+              fullUsers.push(userObj)
+              return fullUsers
+              }).then(fullUsers => {
+                if (fullUsers.length > 2) {
+                  console.log(fullUsers)
+                  // Compare here...
                 }
               })
           }
