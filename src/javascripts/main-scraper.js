@@ -3,6 +3,7 @@ import cheerio from 'cheerio'
 
 const fullUsers = []
 let userObj = {}
+let availableDays = []
 const mainLinks = []
 const calendarLinks = []
 
@@ -27,8 +28,6 @@ function mainScraper (path) {
           })
           return calendarLinks
         }).then(calendarLinks => {
-          console.log(calendarLinks)
-          console.log(mainLinks)
           for (const link of calendarLinks) {
             axios.get(mainLinks[0] + link).then(response => {
               const $ = cheerio.load(response.data)
@@ -49,15 +48,67 @@ function mainScraper (path) {
               return fullUsers
               }).then(fullUsers => {
                 if (fullUsers.length > 2) {
-                  console.log(fullUsers)
-                  // Compare here...
+                  availableDays = findAvailableDay(fullUsers)
+                  console.log('Available day(s): ' + availableDays.join(', '))
+                  return availableDays
                 }
               })
           }
         })
       }
+      if (link.includes('cinema')) {
+        setTimeout(() => {
+          availableDays.forEach(day => {
+            if (day === 'friday') {
+              axios.get(`${link}/check?day=05&movie=01`).then(response => {
+                console.log(response.data)
+              })
+
+            }
+            if (day === 'saturday') {
+              
+            }
+            if (day === 'sunday') {
+              
+            }
+          })
+        }, 500)
+        
+      }
     })
   })
+}
+
+
+function findAvailableDay (fullUsers) {
+  const availableDays = []
+  const result = []
+  fullUsers.forEach(user => {
+   if (user.availableDays.friday) {
+    availableDays.push('friday')
+   }
+   if (user.availableDays.saturday) {
+     availableDays.push('saturday')
+   }
+   if (user.availableDays.sunday) {
+     availableDays.push('sunday')
+   }
+  })
+  if (getCount(availableDays, 'friday') === 3) {
+    result.push('friday')
+  }
+  if (getCount(availableDays, 'saturday') === 3) {
+    result.push('saturday')
+  }
+  if (getCount(availableDays, 'sunday') === 3) {
+    result.push('sunday')
+  }
+  return result
+}
+
+function getCount (array, value) {
+  let count = 0
+  return array.filter(x => x === value).length
 }
 
 export default mainScraper
