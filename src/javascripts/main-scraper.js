@@ -5,6 +5,7 @@ const fullUsers = []
 let userObj = {}
 let availableDays = []
 const movies = []
+let moviesResult = []
 const mainLinks = []
 const calendarLinks = []
 
@@ -57,6 +58,7 @@ function mainScraper (path) {
           }
         })
       }
+      // If url contains cinema
       if (link.includes('cinema')) {
         let numberOfMovies = 0
         axios.get(link).then(response => {
@@ -109,14 +111,21 @@ function mainScraper (path) {
                   availableMovies.push(movies[i][2])
                 }
                 availableMovies.forEach(array => {
-                  orderedMovies.push(...array)
+                  orderedMovies.push(array)
                 })
-                console.log(orderedMovies)
-                // Continue here!!
+                
               }
+              orderedMovies.sort((a, b) => a.movie - b.movie)
+              moviesResult = orderedMovies
             }, 300)
           }, 400)
         })
+      }
+      if (link.includes('dinner')) {
+        setTimeout(() => {
+          console.log(moviesResult)
+        }, 1000)
+        
       }
     })
   })
