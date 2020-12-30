@@ -1,5 +1,6 @@
 import axios from 'axios'
 import cheerio from 'cheerio'
+import qs from 'qs'
 
 const fullUsers = []
 let userObj = {}
@@ -8,6 +9,7 @@ const movies = []
 let moviesResult = []
 const mainLinks = []
 const calendarLinks = []
+const dinnerTimes = []
 
 /**
  * @param path
@@ -48,19 +50,18 @@ function mainScraper (path) {
               }
               fullUsers.push(userObj)
               return fullUsers
-              }).then(fullUsers => {
-                if (fullUsers.length > 2) {
-                  availableDays = findAvailableDay(fullUsers)
-                  if (availableDays.length > 0) {
-                    console.log('Calendar scraped...OK')
-                    console.log('Available day(s): ' + availableDays.join(', '))
-                    return availableDays
-                  } else {
-                    throw new Error('Something went wrong when scraping the calendar...')
-                  }
-                  
+            }).then(fullUsers => {
+              if (fullUsers.length > 2) {
+                availableDays = findAvailableDay(fullUsers)
+                if (availableDays.length > 0) {
+                  console.log('Calendar scraped...OK')
+                  console.log('Available day(s): ' + availableDays.join(', '))
+                  return availableDays
+                } else {
+                  throw new Error('Something went wrong when scraping the calendar...')
                 }
-              })
+              }
+            })
           }
         })
       }
@@ -71,7 +72,7 @@ function mainScraper (path) {
           const amountOfMovies = []
           const $ = cheerio.load(response.data)
           $('#movie > option').each((index, item) => {
-             amountOfMovies.push($(item).attr('value'))
+            amountOfMovies.push($(item).attr('value'))
           })
           numberOfMovies = amountOfMovies.length - 1
           return numberOfMovies
@@ -81,25 +82,25 @@ function mainScraper (path) {
               if (day === 'friday') {
                 for (let i = 0; i < numberOfMovies; i++) {
                   axios.get(`${link}/check?day=05&movie=0${i + 1}`)
-                  .then(response => {
-                    movies.push(response.data)
-                  })
+                    .then(response => {
+                      movies.push(response.data)
+                    })
                 }
               }
               if (day === 'saturday') {
                 for (let i = 0; i < numberOfMovies; i++) {
                   axios.get(`${link}/check?day=06&movie=0${i + 1}`)
-                  .then(response => {
-                    movies.push(response.data)
-                  })
+                    .then(response => {
+                      movies.push(response.data)
+                    })
                 }
               }
               if (day === 'sunday') {
                 for (let i = 0; i < numberOfMovies; i++) {
                   axios.get(`${link}/check?day=07&movie=0${i + 1}`)
-                  .then(response => {
-                    movies.push(response.data)
-                  })
+                    .then(response => {
+                      movies.push(response.data)
+                    })
                 }
               }
             })
@@ -119,7 +120,6 @@ function mainScraper (path) {
                 availableMovies.forEach(array => {
                   orderedMovies.push(array)
                 })
-                
               }
               orderedMovies.sort((a, b) => a.movie - b.movie)
               moviesResult = orderedMovies
@@ -137,29 +137,78 @@ function mainScraper (path) {
         setTimeout(() => {
           const movies = moviesResult
           console.table(movies)
-          //Continue here...
-        }, 1000)
+          const goodDinnerTimes = movies.map(movie => {
+            const dinnerTime = {
+              movie: movie.movie,
+              movieStart: movie.time,
+              day: movie.day === '05' ? 'Friday' : '',
+              timeForDinner: Number(movie.time.substring(0, 2)) + 2 + ':00'
+            }
+            return dinnerTime
+          })
+          console.table(goodDinnerTimes)
+          const creds = qs.stringify({
+            username: 'zeke',
+            password: 'coys',
+            submit: 'login'
+          })
+          const options = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            data: creds,
+            redirect: 'manual',
+            maxRedirects: 0,
+            url: link + 'login'
+          }
 
-        
+          axios.post(link + 'login', creds, options).then(response => {
+            console.log('Fiskmås')
+            if (response.status === 302) {
+              console.log('Managing cookies...OK')
+              axios.get(link + response.headers.location, {
+                headers: {
+                  Cookie: response.headers['set-cookie'].toString()
+                },
+                maxRedirects: 0
+              }).then(resp => {
+                const dinnerBooking = cheerio.load(resp.data)
+                dinnerBooking('input').each((index, item) => {
+                  if (dinnerBooking(item).attr('value').length < 8) {
+                    dinnerTimes.push(dinnerBooking(item).attr('value'))
+                  }
+                })
+                return dinnerTimes
+              }).then(dinnerTimes => {
+                console.table(dinnerTimes)
+              })
+            }
+          }).catch(err => {
+            console.error(err.response.status)
+          })
+        }, 1000)
       }
     })
   })
 }
 
-
+/**
+ * @param fullUsers
+ */
 function findAvailableDay (fullUsers) {
   const availableDays = []
   const result = []
   fullUsers.forEach(user => {
-   if (user.availableDays.friday) {
-    availableDays.push('friday')
-   }
-   if (user.availableDays.saturday) {
-     availableDays.push('saturday')
-   }
-   if (user.availableDays.sunday) {
-     availableDays.push('sunday')
-   }
+    if (user.availableDays.friday) {
+      availableDays.push('friday')
+    }
+    if (user.availableDays.saturday) {
+      availableDays.push('saturday')
+    }
+    if (user.availableDays.sunday) {
+      availableDays.push('sunday')
+    }
   })
   if (getCount(availableDays, 'friday') === 3) {
     result.push('friday')
@@ -173,6 +222,10 @@ function findAvailableDay (fullUsers) {
   return result
 }
 
+/**
+ * @param array
+ * @param value
+ */
 function getCount (array, value) {
   return array.filter(x => x === value).length
 }
