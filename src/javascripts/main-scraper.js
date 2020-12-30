@@ -51,8 +51,14 @@ function mainScraper (path) {
               }).then(fullUsers => {
                 if (fullUsers.length > 2) {
                   availableDays = findAvailableDay(fullUsers)
-                  console.log('Available day(s): ' + availableDays.join(', '))
-                  return availableDays
+                  if (availableDays.length > 0) {
+                    console.log('Calendar scraped...OK')
+                    console.log('Available day(s): ' + availableDays.join(', '))
+                    return availableDays
+                  } else {
+                    throw new Error('Something went wrong when scraping the calendar...')
+                  }
+                  
                 }
               })
           }
@@ -117,14 +123,23 @@ function mainScraper (path) {
               }
               orderedMovies.sort((a, b) => a.movie - b.movie)
               moviesResult = orderedMovies
+              moviesResult = moviesResult.filter((a, b) => moviesResult.indexOf(a) === b)
+              if (moviesResult.length > 1) {
+                console.log('Movies scraped...OK')
+              } else {
+                throw new Error('Something went wrong when scraping the movies...')
+              }
             }, 300)
           }, 400)
         })
       }
       if (link.includes('dinner')) {
         setTimeout(() => {
-          console.log(moviesResult)
+          const movies = moviesResult
+          console.table(movies)
+          //Continue here...
         }, 1000)
+
         
       }
     })
