@@ -11,9 +11,6 @@ const mainLinks = []
 const calendarLinks = []
 const dinnerTimes = []
 
-/**
- * @param path
- */
 function mainScraper (path) {
   axios.get(path).then(response => {
     const $ = cheerio.load(response.data)
@@ -72,9 +69,15 @@ function mainScraper (path) {
           const amountOfMovies = []
           const $ = cheerio.load(response.data)
           $('#movie > option').each((index, item) => {
-            amountOfMovies.push($(item).attr('value'))
+            if (!isNaN(Number($(item).attr('value')))) {
+              const theMovies = {
+                movieNumber: $(item).attr('value'),
+                movieName: $(item).text()
+              }
+              amountOfMovies.push(theMovies)
+            }
           })
-          numberOfMovies = amountOfMovies.length - 1
+          numberOfMovies = amountOfMovies.length
           return numberOfMovies
         }).then((numberOfMovies) => {
           setTimeout(() => {
@@ -126,6 +129,7 @@ function mainScraper (path) {
               moviesResult = moviesResult.filter((a, b) => moviesResult.indexOf(a) === b)
               if (moviesResult.length > 1) {
                 console.log('Movies scraped...OK')
+                console.log(moviesResult)
               } else {
                 throw new Error('Something went wrong when scraping the movies...')
               }
@@ -141,7 +145,7 @@ function mainScraper (path) {
             const dinnerTime = {
               movie: movie.movie,
               movieStart: movie.time,
-              day: movie.day === '05' ? 'Friday' : '',
+              day: returnCorrectDay(movie.day),
               timeForDinner: Number(movie.time.substring(0, 2)) + 2 + ':00'
             }
             return dinnerTime
@@ -160,11 +164,19 @@ function mainScraper (path) {
             data: creds,
             redirect: 'manual',
             maxRedirects: 0,
-            url: link + 'login'
+            url: link + 'login',
+            /**
+             * Response validation to prevent rejection at 302 status.
+             *
+             * @param {number} status As the statuscode.
+             * @returns {boolean} true if the status code is 302 or ok.
+             */
+            validateStatus: (status) => {
+              return (status >= 200 && status < 300) || status === 302
+            }
           }
 
           axios.post(link + 'login', creds, options).then(response => {
-            console.log('Fiskmås')
             if (response.status === 302) {
               console.log('Managing cookies...OK')
               axios.get(link + response.headers.location, {
@@ -220,6 +232,21 @@ function findAvailableDay (fullUsers) {
     result.push('sunday')
   }
   return result
+}
+
+function returnCorrectDay (movieDay) {
+  let day = ''
+  switch (movieDay) {
+    case '06':
+      day = 'Saturday'
+      break
+    case '07':
+      day = 'Sunday'
+      break
+    default:
+      day = 'Friday'
+  }
+  return day
 }
 
 /**
