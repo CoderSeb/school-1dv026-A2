@@ -1,26 +1,19 @@
 import axios from 'axios'
 import cheerio from 'cheerio'
 import qs from 'qs'
+import linkScraper from './link-scraper.js'
 
 const fullUsers = []
 let userObj = {}
 let availableDays = []
 const movies = []
 let moviesResult = []
-const mainLinks = []
 const calendarLinks = []
 const dinnerTimes = []
 const amountOfMovies = []
 
 function mainScraper (path) {
-  axios.get(path).then(response => {
-    console.log('Scraping links...OK')
-    const $ = cheerio.load(response.data)
-    $('a').each((index, item) => {
-      mainLinks.push($(item).attr('href'))
-    })
-    return mainLinks
-  }).then(mainLinks => {
+  linkScraper(path).then(mainLinks => {
     mainLinks.forEach(link => {
       // If link contains calendar path
       if (link.includes('calendar')) {
