@@ -10,6 +10,7 @@ let moviesResult = []
 const mainLinks = []
 const calendarLinks = []
 const dinnerTimes = []
+const amountOfMovies = []
 
 function mainScraper (path) {
   axios.get(path).then(response => {
@@ -66,7 +67,6 @@ function mainScraper (path) {
       if (link.includes('cinema')) {
         let numberOfMovies = 0
         axios.get(link).then(response => {
-          const amountOfMovies = []
           const $ = cheerio.load(response.data)
           $('#movie > option').each((index, item) => {
             if (!isNaN(Number($(item).attr('value')))) {
@@ -129,7 +129,6 @@ function mainScraper (path) {
               moviesResult = moviesResult.filter((a, b) => moviesResult.indexOf(a) === b)
               if (moviesResult.length > 1) {
                 console.log('Movies scraped...OK')
-                console.log(moviesResult)
               } else {
                 throw new Error('Something went wrong when scraping the movies...')
               }
@@ -140,7 +139,6 @@ function mainScraper (path) {
       if (link.includes('dinner')) {
         setTimeout(() => {
           const movies = moviesResult
-          console.table(movies)
           const goodDinnerTimes = movies.map(movie => {
             const dinnerTime = {
               movie: movie.movie,
@@ -150,7 +148,6 @@ function mainScraper (path) {
             }
             return dinnerTime
           })
-          console.table(goodDinnerTimes)
           const creds = qs.stringify({
             username: 'zeke',
             password: 'coys',
@@ -178,6 +175,7 @@ function mainScraper (path) {
 
           axios.post(link + 'login', creds, options).then(response => {
             if (response.status === 302) {
+              console.log('Scraping dinner reservations...OK')
               console.log('Managing cookies...OK')
               axios.get(link + response.headers.location, {
                 headers: {
@@ -193,7 +191,41 @@ function mainScraper (path) {
                 })
                 return dinnerTimes
               }).then(dinnerTimes => {
-                console.table(dinnerTimes)
+                const orderedDinnerTimes = []
+                dinnerTimes.forEach(dinnerTime => {
+                  const dinnerObject = {
+                    dinnerDay: dinnerTime.substring(0, 3),
+                    dinnerStart: dinnerTime.substring(3, 5) + ':00',
+                    dinnerEnd: dinnerTime.substring(5, 7) + ':00'
+                  }
+                  orderedDinnerTimes.push(dinnerObject)
+                })
+                return orderedDinnerTimes
+              }).then(dinnerTimes => {
+                const resultArr = []
+                console.log('Comparing schedules...OK')
+                goodDinnerTimes.forEach(times => {
+                  const result = {
+                    dayToGoOut: availableDays.join(' or '),
+                    movieToBook: findMovieName(times.movie, amountOfMovies),
+                    movieStart: times.movieStart,
+                    dinnerTimeAvailable: checkDinnerTime(times.day, times.timeForDinner, dinnerTimes)
+                  }
+                  if (result.dinnerTimeAvailable.length > 0) {
+                    resultArr.push(result)
+                  }
+                })
+                let resultCounter = 0
+                resultArr.forEach(result => {
+                  if (resultCounter < 1) {
+                    console.log('\nScraping done... Collecting results... OK')
+                    console.log(`\nYou and your friends can go out on ${result.dayToGoOut}.`)
+                  } else {
+                    console.log('Next option:')
+                  }
+                  console.log(`\nWatch the movie ${result.movieToBook} which starts at ${result.movieStart}.\nAfterwards, you can book a dinner table on ${result.dinnerTimeAvailable}.\n`)
+                  resultCounter++
+                })
               })
             }
           }).catch(err => {
@@ -247,6 +279,27 @@ function returnCorrectDay (movieDay) {
       day = 'Friday'
   }
   return day
+}
+
+function findMovieName (movieNumber, movieArray) {
+  let result = ''
+  movieArray.forEach(movie => {
+    if (movie.movieNumber === movieNumber) {
+      result = movie.movieName
+    }
+  })
+  return result
+}
+
+function checkDinnerTime (day, time, dinnerTimesArray) {
+  let result = ''
+  const funcDay = day.substring(0, 3).toLowerCase()
+  dinnerTimesArray.forEach(dinnerTime => {
+    if (funcDay === dinnerTime.dinnerDay && time === dinnerTime.dinnerStart) {
+      result = `${day} at ${time}`
+    }
+  })
+  return result
 }
 
 /**
