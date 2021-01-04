@@ -1,63 +1,35 @@
+// Imports
 import axios from 'axios'
 import cheerio from 'cheerio'
 import qs from 'qs'
+import calendarScraper from './calendar-scraper.js'
 import linkScraper from './link-scraper.js'
 
-const fullUsers = []
-let userObj = {}
+// Variable declaration
 let availableDays = []
 const movies = []
 let moviesResult = []
-const calendarLinks = []
 const dinnerTimes = []
 const amountOfMovies = []
 
-function mainScraper (path) {
+/**
+ * Main function of the web scraper.
+ *
+ * @param {string} path as the URL to be scraped.
+ */
+async function mainScraper (path) {
   linkScraper(path).then(mainLinks => {
-    mainLinks.forEach(link => {
-      // If link contains calendar path
+    mainLinks.forEach(async link => {
+      // If link contains calendar.
       if (link.includes('calendar')) {
-        axios.get(link).then(response => {
-          const $ = cheerio.load(response.data)
-          $('a').each((index, item) => {
-            calendarLinks.push($(item).attr('href').substring(2))
-          })
-          return calendarLinks
-        }).then(calendarLinks => {
-          for (const link of calendarLinks) {
-            axios.get(mainLinks[0] + link).then(response => {
-              const $ = cheerio.load(response.data)
-              const weekDays = []
-              $('tbody > tr > td').each((index, item) => {
-                weekDays.push($(item).text().toUpperCase())
-              })
-              userObj = {
-                name: $('h2').text(),
-                calendarUrl: mainLinks[0] + link,
-                availableDays: {
-                  friday: weekDays[0].includes('OK'),
-                  saturday: weekDays[1].includes('OK'),
-                  sunday: weekDays[2].includes('OK')
-                }
-              }
-              fullUsers.push(userObj)
-              return fullUsers
-            }).then(fullUsers => {
-              if (fullUsers.length > 2) {
-                availableDays = findAvailableDay(fullUsers)
-                if (availableDays.length > 0) {
-                  console.log('Scraping available days...OK')
-                  return availableDays
-                } else {
-                  throw new Error('Something went wrong when scraping the calendar...')
-                }
-              }
-            })
-          }
+        calendarScraper(link, mainLinks).then(response => {
+          console.log(response)
         })
       }
-      // If url contains cinema
+      // If link contains cinema
       if (link.includes('cinema')) {
+        const days = await availableDays
+        console.log(days)
         let numberOfMovies = 0
         axios.get(link).then(response => {
           const $ = cheerio.load(response.data)
@@ -120,13 +92,11 @@ function mainScraper (path) {
               orderedMovies.sort((a, b) => a.movie - b.movie)
               moviesResult = orderedMovies
               moviesResult = moviesResult.filter((a, b) => moviesResult.indexOf(a) === b)
-              if (moviesResult.length > 1) {
-                console.log('Scraping showtimes...OK')
-              } else {
-                throw new Error('Something went wrong when scraping the movies...')
-              }
-            }, 300)
-          }, 400)
+              console.log('Scraping showtimes...OK')
+            }, 700)
+          }, 800)
+        }).catch(err => {
+          console.error('Ops! Something went wrong when scraping the cinema...' + err.message)
         })
       }
       if (link.includes('dinner')) {
@@ -218,7 +188,7 @@ function mainScraper (path) {
               })
             }
           }).catch(err => {
-            console.error(err.response.status)
+            console.error('Ops! Something went wrong while scraping the dinner reservations...' + err.message)
           })
         }, 1000)
       }
@@ -226,34 +196,7 @@ function mainScraper (path) {
   })
 }
 
-/**
- * @param fullUsers
- */
-function findAvailableDay (fullUsers) {
-  const availableDays = []
-  const result = []
-  fullUsers.forEach(user => {
-    if (user.availableDays.friday) {
-      availableDays.push('friday')
-    }
-    if (user.availableDays.saturday) {
-      availableDays.push('saturday')
-    }
-    if (user.availableDays.sunday) {
-      availableDays.push('sunday')
-    }
-  })
-  if (getCount(availableDays, 'friday') === 3) {
-    result.push('friday')
-  }
-  if (getCount(availableDays, 'saturday') === 3) {
-    result.push('saturday')
-  }
-  if (getCount(availableDays, 'sunday') === 3) {
-    result.push('sunday')
-  }
-  return result
-}
+
 
 function returnCorrectDay (movieDay) {
   let day = ''
@@ -291,12 +234,6 @@ function checkDinnerTime (day, time, dinnerTimesArray) {
   return result
 }
 
-/**
- * @param array
- * @param value
- */
-function getCount (array, value) {
-  return array.filter(x => x === value).length
-}
+
 
 export default mainScraper
