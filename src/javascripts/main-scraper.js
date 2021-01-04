@@ -14,6 +14,7 @@ const amountOfMovies = []
 
 function mainScraper (path) {
   axios.get(path).then(response => {
+    console.log('Scraping links...OK')
     const $ = cheerio.load(response.data)
     $('a').each((index, item) => {
       mainLinks.push($(item).attr('href'))
@@ -52,8 +53,7 @@ function mainScraper (path) {
               if (fullUsers.length > 2) {
                 availableDays = findAvailableDay(fullUsers)
                 if (availableDays.length > 0) {
-                  console.log('Calendar scraped...OK')
-                  console.log('Available day(s): ' + availableDays.join(', '))
+                  console.log('Scraping available days...OK')
                   return availableDays
                 } else {
                   throw new Error('Something went wrong when scraping the calendar...')
@@ -128,7 +128,7 @@ function mainScraper (path) {
               moviesResult = orderedMovies
               moviesResult = moviesResult.filter((a, b) => moviesResult.indexOf(a) === b)
               if (moviesResult.length > 1) {
-                console.log('Movies scraped...OK')
+                console.log('Scraping showtimes...OK')
               } else {
                 throw new Error('Something went wrong when scraping the movies...')
               }
@@ -175,8 +175,7 @@ function mainScraper (path) {
 
           axios.post(link + 'login', creds, options).then(response => {
             if (response.status === 302) {
-              console.log('Scraping dinner reservations...OK')
-              console.log('Managing cookies...OK')
+              console.log('Scraping possible reservations...OK')
               axios.get(link + response.headers.location, {
                 headers: {
                   Cookie: response.headers['set-cookie'].toString()
@@ -203,28 +202,25 @@ function mainScraper (path) {
                 return orderedDinnerTimes
               }).then(dinnerTimes => {
                 const resultArr = []
-                console.log('Comparing schedules...OK')
                 goodDinnerTimes.forEach(times => {
                   const result = {
                     dayToGoOut: availableDays.join(' or '),
                     movieToBook: findMovieName(times.movie, amountOfMovies),
                     movieStart: times.movieStart,
+                    dinnerDayAvailable: times.day,
                     dinnerTimeAvailable: checkDinnerTime(times.day, times.timeForDinner, dinnerTimes)
                   }
                   if (result.dinnerTimeAvailable.length > 0) {
                     resultArr.push(result)
                   }
                 })
-                let resultCounter = 0
+                let firstLog = true
                 resultArr.forEach(result => {
-                  if (resultCounter < 1) {
-                    console.log('\nScraping done... Collecting results... OK')
-                    console.log(`\nYou and your friends can go out on ${result.dayToGoOut}.`)
-                  } else {
-                    console.log('Next option:')
+                  if (firstLog) {
+                    console.log('\nSuggestions\n============')
                   }
-                  console.log(`\nWatch the movie ${result.movieToBook} which starts at ${result.movieStart}.\nAfterwards, you can book a dinner table on ${result.dinnerTimeAvailable}.\n`)
-                  resultCounter++
+                  console.log(`\n* On ${result.dinnerDayAvailable}, "${result.movieToBook}" begins at ${result.movieStart}, and there is a free table to book between ${result.dinnerTimeAvailable}.`)
+                  firstLog = false
                 })
               })
             }
@@ -296,7 +292,7 @@ function checkDinnerTime (day, time, dinnerTimesArray) {
   const funcDay = day.substring(0, 3).toLowerCase()
   dinnerTimesArray.forEach(dinnerTime => {
     if (funcDay === dinnerTime.dinnerDay && time === dinnerTime.dinnerStart) {
-      result = `${day} at ${time}`
+      result = `${dinnerTime.dinnerStart}-${dinnerTime.dinnerEnd}`
     }
   })
   return result
