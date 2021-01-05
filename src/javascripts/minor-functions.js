@@ -1,4 +1,11 @@
 /**
+ * Minor functions script file.
+ *
+ * @author Sebastian Åkerblom <sa224ny@student.lnu.se>
+ * @version 1.0.0
+ */
+
+/**
  * Takes a string with a number and returns the correspondent weekday.
  *
  * @param {string} movieDay as the string to be converted to a weekday.

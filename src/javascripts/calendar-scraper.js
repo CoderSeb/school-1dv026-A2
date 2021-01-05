@@ -1,3 +1,10 @@
+/**
+ * The calendar scraper module.
+ *
+ * @author Sebastian Åkerblom <sa224ny@student.lnu.se>
+ * @version 1.0.0
+ */
+
 // Imports
 import axios from 'axios'
 import cheerio from 'cheerio'

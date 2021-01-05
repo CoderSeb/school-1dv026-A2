@@ -1,11 +1,15 @@
-import mainScraper from './javascripts/main-scraper.js'
+/**
+ * The main script file of the application.
+ *
+ * @author Sebastian Åkerblom <sa224ny@student.lnu.se>
+ * @version 1.0.0
+ */
 
-// Used in development to quickly run the program.
-const url1 = 'https://cscloud6-127.lnu.se/scraper-site-1'
-const url2 = 'https://cscloud6-127.lnu.se/scraper-site-2'
+// Imports
+import mainScraper from './javascripts/main-scraper.js'
 
 const [,, path] = process.argv
 
 console.log(`Web scraping ${path}\nThis may take some time...\n`)
 
-mainScraper(url1)
+mainScraper(path)
