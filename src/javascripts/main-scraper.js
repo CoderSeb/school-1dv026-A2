@@ -71,17 +71,18 @@ async function mainScraper (path) {
             }
             return dinnerTime
           })
+          // Using qs to create an encoded string to be sent with the post request.
           const creds = qs.stringify({
             username: 'zeke',
             password: 'coys',
             submit: 'login'
           })
+          // Creating the config for the post request.
           const options = {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
             },
-            data: creds,
             redirect: 'manual',
             maxRedirects: 0,
             url: link + 'login',
