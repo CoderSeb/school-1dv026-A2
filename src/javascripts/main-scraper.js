@@ -4,13 +4,14 @@ import cheerio from 'cheerio'
 import qs from 'qs'
 import calendarScraper from './calendar-scraper.js'
 import linkScraper from './link-scraper.js'
+import cinemaScraper from './cinema-scraper.js'
 
 // Variable declaration
 let availableDays = []
-const movies = []
-let moviesResult = []
 const dinnerTimes = []
 const amountOfMovies = []
+let numberOfMovies = null
+let moviesResult = null
 
 /**
  * Main function of the web scraper.
@@ -27,7 +28,6 @@ async function mainScraper (path) {
       }
       // If link contains cinema
       if (link.includes('cinema')) {
-        let numberOfMovies = 0
         axios.get(link).then(response => {
           const $ = cheerio.load(response.data)
           $('#movie > option').each((index, item) => {
@@ -41,59 +41,13 @@ async function mainScraper (path) {
           })
           numberOfMovies = amountOfMovies.length
           return numberOfMovies
-        }).then((numberOfMovies) => {
+        }).then(numberOfMovies => {
           setTimeout(() => {
-            availableDays.forEach(day => {
-              if (day === 'friday') {
-                for (let i = 0; i < numberOfMovies; i++) {
-                  axios.get(`${link}/check?day=05&movie=0${i + 1}`)
-                    .then(response => {
-                      movies.push(response.data)
-                    })
-                }
-              }
-              if (day === 'saturday') {
-                for (let i = 0; i < numberOfMovies; i++) {
-                  axios.get(`${link}/check?day=06&movie=0${i + 1}`)
-                    .then(response => {
-                      movies.push(response.data)
-                    })
-                }
-              }
-              if (day === 'sunday') {
-                for (let i = 0; i < numberOfMovies; i++) {
-                  axios.get(`${link}/check?day=07&movie=0${i + 1}`)
-                    .then(response => {
-                      movies.push(response.data)
-                    })
-                }
-              }
+            const getMovies = cinemaScraper(link, availableDays, numberOfMovies)
+            Promise.all([getMovies]).then((value) => {
+              moviesResult = value.flat()
             })
-            setTimeout(() => {
-              const availableMovies = []
-              const orderedMovies = []
-              for (let i = 0; i < movies.length; i++) {
-                if (movies[i][0].status === 1) {
-                  availableMovies.push(movies[i][0])
-                }
-                if (movies[i][1].status === 1) {
-                  availableMovies.push(movies[i][1])
-                }
-                if (movies[i][2].status === 1) {
-                  availableMovies.push(movies[i][2])
-                }
-                availableMovies.forEach(array => {
-                  orderedMovies.push(array)
-                })
-              }
-              orderedMovies.sort((a, b) => a.movie - b.movie)
-              moviesResult = orderedMovies
-              moviesResult = moviesResult.filter((a, b) => moviesResult.indexOf(a) === b)
-              console.log('Scraping showtimes...OK')
-            }, 400)
-          }, 700)
-        }).catch(err => {
-          console.error('Ops! Something went wrong when scraping the cinema...' + err.message)
+          }, 500)
         })
       }
       // If link contains dinner.
@@ -194,6 +148,12 @@ async function mainScraper (path) {
   })
 }
 
+/**
+ * Takes a string with a number and returns the correspondent weekday.
+ *
+ * @param {string} movieDay as the string to be converted to a weekday.
+ * @returns {string} as the weekday.
+ */
 function returnCorrectDay (movieDay) {
   let day = ''
   switch (movieDay) {
@@ -209,6 +169,14 @@ function returnCorrectDay (movieDay) {
   return day
 }
 
+/**
+ * Takes in a number and an array of movies and returns
+ * the name of the movie with the input number.
+ *
+ * @param {number} movieNumber as the movie number.
+ * @param {object[]} movieArray as the array of movies.
+ * @returns {string} as the movie name.
+ */
 function findMovieName (movieNumber, movieArray) {
   let result = ''
   movieArray.forEach(movie => {
@@ -219,6 +187,15 @@ function findMovieName (movieNumber, movieArray) {
   return result
 }
 
+/**
+ * Takes in day and time and an array of dinner times
+ * and returns the dinner time, start to end if available.
+ *
+ * @param {string} day as the day.
+ * @param {string} time as the time.
+ * @param {object[]} dinnerTimesArray as the array with available dinner times.
+ * @returns {string} as the available dinner time start and end.
+ */
 function checkDinnerTime (day, time, dinnerTimesArray) {
   let result = ''
   const funcDay = day.substring(0, 3).toLowerCase()
