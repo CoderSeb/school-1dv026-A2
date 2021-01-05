@@ -22,14 +22,11 @@ async function mainScraper (path) {
     mainLinks.forEach(async link => {
       // If link contains calendar.
       if (link.includes('calendar')) {
-        calendarScraper(link, mainLinks).then(response => {
-          console.log(response)
-        })
+        availableDays = await calendarScraper(link, mainLinks)
+        return availableDays
       }
       // If link contains cinema
       if (link.includes('cinema')) {
-        const days = await availableDays
-        console.log(days)
         let numberOfMovies = 0
         axios.get(link).then(response => {
           const $ = cheerio.load(response.data)
@@ -93,12 +90,13 @@ async function mainScraper (path) {
               moviesResult = orderedMovies
               moviesResult = moviesResult.filter((a, b) => moviesResult.indexOf(a) === b)
               console.log('Scraping showtimes...OK')
-            }, 700)
-          }, 800)
+            }, 400)
+          }, 700)
         }).catch(err => {
           console.error('Ops! Something went wrong when scraping the cinema...' + err.message)
         })
       }
+      // If link contains dinner.
       if (link.includes('dinner')) {
         setTimeout(() => {
           const movies = moviesResult
@@ -190,13 +188,11 @@ async function mainScraper (path) {
           }).catch(err => {
             console.error('Ops! Something went wrong while scraping the dinner reservations...' + err.message)
           })
-        }, 1000)
+        }, 1600)
       }
     })
   })
 }
-
-
 
 function returnCorrectDay (movieDay) {
   let day = ''
@@ -233,7 +229,5 @@ function checkDinnerTime (day, time, dinnerTimesArray) {
   })
   return result
 }
-
-
 
 export default mainScraper
