@@ -5,6 +5,7 @@ import qs from 'qs'
 import calendarScraper from './calendar-scraper.js'
 import linkScraper from './link-scraper.js'
 import cinemaScraper from './cinema-scraper.js'
+import { returnCorrectDay, findMovieName, checkDinnerTime } from './minor-functions.js'
 
 // Variable declaration
 let availableDays = []
@@ -146,65 +147,6 @@ async function mainScraper (path) {
       }
     })
   })
-}
-
-/**
- * Takes a string with a number and returns the correspondent weekday.
- *
- * @param {string} movieDay as the string to be converted to a weekday.
- * @returns {string} as the weekday.
- */
-function returnCorrectDay (movieDay) {
-  let day = ''
-  switch (movieDay) {
-    case '06':
-      day = 'Saturday'
-      break
-    case '07':
-      day = 'Sunday'
-      break
-    default:
-      day = 'Friday'
-  }
-  return day
-}
-
-/**
- * Takes in a number and an array of movies and returns
- * the name of the movie with the input number.
- *
- * @param {number} movieNumber as the movie number.
- * @param {object[]} movieArray as the array of movies.
- * @returns {string} as the movie name.
- */
-function findMovieName (movieNumber, movieArray) {
-  let result = ''
-  movieArray.forEach(movie => {
-    if (movie.movieNumber === movieNumber) {
-      result = movie.movieName
-    }
-  })
-  return result
-}
-
-/**
- * Takes in day and time and an array of dinner times
- * and returns the dinner time, start to end if available.
- *
- * @param {string} day as the day.
- * @param {string} time as the time.
- * @param {object[]} dinnerTimesArray as the array with available dinner times.
- * @returns {string} as the available dinner time start and end.
- */
-function checkDinnerTime (day, time, dinnerTimesArray) {
-  let result = ''
-  const funcDay = day.substring(0, 3).toLowerCase()
-  dinnerTimesArray.forEach(dinnerTime => {
-    if (funcDay === dinnerTime.dinnerDay && time === dinnerTime.dinnerStart) {
-      result = `${dinnerTime.dinnerStart}-${dinnerTime.dinnerEnd}`
-    }
-  })
-  return result
 }
 
 export default mainScraper
