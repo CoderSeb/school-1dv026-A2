@@ -10,10 +10,6 @@ import axios from 'axios'
 import cheerio from 'cheerio'
 import { findAvailableDay } from './minor-functions.js'
 
-// Variable declaration
-let availableDays = []
-const fullUsers = []
-
 /**
  * Scraping the calendar urls to find the available days.
  *
@@ -21,6 +17,8 @@ const fullUsers = []
  * @returns {string[]} as the available days.
  */
 export default async function calendarScraper (calendarUrl) {
+  let availableDays = []
+  const fullUsers = []
   // Get individual urls.
   const firstScrape = await axios.get(calendarUrl).then(response => {
     const calendarLinks = []

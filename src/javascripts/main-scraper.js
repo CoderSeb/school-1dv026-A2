@@ -22,7 +22,6 @@ async function mainScraper (path) {
   const [calendar, cinema, dinner] = await linkScraper(path)
   const amountOfMovies = []
   let numberOfMovies = null
-  let moviesResult = null
 
   const availableDays = await calendarScraper(calendar)
   // If link contains cinema
@@ -41,15 +40,11 @@ async function mainScraper (path) {
     return numberOfMovies
   }).then(async numberOfMovies => {
     const getMovies = await cinemaScraper(cinema, availableDays, numberOfMovies)
-    Promise.all([getMovies]).then((value) => {
-      moviesResult = value.flat()
-      return moviesResult
+    return getMovies.flat()
+  }).then(moviesResult => {
+    Promise.all([moviesResult, availableDays, amountOfMovies]).then(params => {
+      dinnerScraper(dinner, params[0], params[1], params[2])
     })
-  })
-
-  Promise.all([moviesResult, availableDays, amountOfMovies]).then(params => {
-    console.log(params)
-    dinnerScraper(dinner, params[0], params[1], params[2])
   })
 }
 

@@ -9,9 +9,6 @@
 import axios from 'axios'
 import cheerio from 'cheerio'
 
-// Variable declaration
-const mainLinks = []
-
 /**
  * Takes the url path and returns the scraped links.
  *
@@ -19,6 +16,7 @@ const mainLinks = []
  * @returns {string[]} as the links scraped.
  */
 export default async function linkScraper (path) {
+  const mainLinks = []
   const result = await axios.get(path).then(response => {
     console.log('Scraping links...OK')
     const $ = cheerio.load(response.data)
