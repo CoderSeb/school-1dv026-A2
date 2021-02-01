@@ -13,56 +13,43 @@ import linkScraper from './link-scraper.js'
 import cinemaScraper from './cinema-scraper.js'
 import dinnerScraper from './dinner-scraper.js'
 
-// Variable declaration
-let availableDays = []
-const amountOfMovies = []
-let numberOfMovies = null
-let moviesResult = null
-
 /**
  * Main function of the web scraper.
  *
  * @param {string} path as the URL to be scraped.
  */
 async function mainScraper (path) {
-  linkScraper(path).then(mainLinks => {
-    mainLinks.forEach(async link => {
-      // If link contains calendar.
-      if (link.includes('calendar')) {
-        availableDays = await calendarScraper(link, mainLinks)
-        return availableDays
-      }
-      // If link contains cinema
-      if (link.includes('cinema')) {
-        axios.get(link).then(response => {
-          const $ = cheerio.load(response.data)
-          $('#movie > option').each((index, item) => {
-            if (!isNaN(Number($(item).attr('value')))) {
-              const theMovies = {
-                movieNumber: $(item).attr('value'),
-                movieName: $(item).text()
-              }
-              amountOfMovies.push(theMovies)
-            }
-          })
-          numberOfMovies = amountOfMovies.length
-          return numberOfMovies
-        }).then(numberOfMovies => {
-          setTimeout(() => {
-            const getMovies = cinemaScraper(link, availableDays, numberOfMovies)
-            Promise.all([getMovies]).then((value) => {
-              moviesResult = value.flat()
-            })
-          }, 500)
-        })
-      }
-      // If link contains dinner.
-      if (link.includes('dinner')) {
-        setTimeout(() => {
-          dinnerScraper(link, moviesResult, availableDays, amountOfMovies)
-        }, 1500)
+  const [calendar, cinema, dinner] = await linkScraper(path)
+  const amountOfMovies = []
+  let numberOfMovies = null
+  let moviesResult = null
+
+  const availableDays = await calendarScraper(calendar)
+  // If link contains cinema
+  axios.get(cinema).then(response => {
+    const $ = cheerio.load(response.data)
+    $('#movie > option').each((index, item) => {
+      if (!isNaN(Number($(item).attr('value')))) {
+        const theMovies = {
+          movieNumber: $(item).attr('value'),
+          movieName: $(item).text()
+        }
+        amountOfMovies.push(theMovies)
       }
     })
+    numberOfMovies = amountOfMovies.length
+    return numberOfMovies
+  }).then(async numberOfMovies => {
+    const getMovies = await cinemaScraper(cinema, availableDays, numberOfMovies)
+    Promise.all([getMovies]).then((value) => {
+      moviesResult = value.flat()
+      return moviesResult
+    })
+  })
+
+  Promise.all([moviesResult, availableDays, amountOfMovies]).then(params => {
+    console.log(params)
+    dinnerScraper(dinner, params[0], params[1], params[2])
   })
 }
 
